@@ -21,15 +21,27 @@ var server = http.createServer(function(request, response){
   //comparison test to check for request or response
   //if response then send data set to client
   if(request.method === 'GET') {
+
+    //conditional if URL is root that it sends index.html
     if(request.url === '/') {
       fs.readFile('./public/index.html', {encoding: 'UTF-8'}, function(err, buffer){
         if(err) throw err;
         response.end(buffer);
       });
+
+    //conditional if URL is in library that it sends request.url.html
     } else {
       fs.readFile('./public/'+request.url, {encoding: 'UTF-8'},function(err, buffer){
         console.log('code is beautiful');
         if(err) throw err;
+
+        //return err 404 index.html
+        fs.readFile('./public/404.html', {encoding: 'UTF-8'}, function(err, buffer) {
+          if(err) throw err;
+          response.writeHead(404, {'Content-Type': 'text/plain'});
+          response.end(buffer);
+        });
+
         response.end(buffer);
       });
     }
@@ -58,17 +70,26 @@ var server = http.createServer(function(request, response){
         '<p><a href="/">back</a></p>' +
       '</body>' +
       '</html>';
+    // var addElement =
+
+    //conditional to test if request is a POST
+    if(request.method === 'POST') {
 
     //post data dynamically based on elementName
     //if elementName request is NOT a file ---> writeFile
     //save method to a variable and run it through writefile
-    if(request.url === '/elements') {
-      fs.writeFile('./public/'+data.elementName+'.html', dataPost, function(err){
-        if(err) throw err;
-        response.end(dataPost);
-        console.log('Data has been stored');
-      });
-    }
+      if(request.url === '/elements') {
+        fs.writeFile('./public/'+data.elementName+'.html', dataPost, function(err){
+          if(err) throw err;
+          response.end(dataPost);
+          console.log('Data has been stored');
+        });
+        fs.writeFile('./public/index.html', addElement, {encoding: 'UTF-8'}, function(err){
+          if(err) throw err;
+          console.log('Added ' + data.elementName + ' to index.html');
+        });
+      }
+    };
   });
 
 });
