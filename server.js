@@ -7,10 +7,14 @@ var qs = require('querystring');
 //get access to the fs library
 var fs = require('fs');
 
+//get the url
 var url = require('url');
 
 //point to port on local server
 var PORT = 3000;
+
+//template html built for dynamically writing new data post
+var dataBuild = require('./template');
 
 //===================================Server request=======================
 
@@ -55,21 +59,21 @@ var server = http.createServer(function(request, response){
   //parse the data string to return an object
   request.on('end', function() {
     var data = qs.parse( dataBuffer.toString() );
-    var dataPost =
-      '<html lang="en">' +
-      '<head>' +
-        '<meta charset="UTF-8">' +
-        '<title> The Elements -' + data.elementName + '</title>' +
-        '<link rel="stylesheet" href="/css/styles.css">' +
-      '</head>' +
-      '<body>' +
-        '<h1>' + data.elementName + '</h1>' +
-        '<h2>' + data.elementSymbol + '</h2>' +
-        '<h3>' + data.elementAtomicNumber + '</h3>' +
-        '<p>' + data.elementDescription + '</p>' +
-        '<p><a href="/">back</a></p>' +
-      '</body>' +
-      '</html>';
+    // var dataPost =
+    //   '<html lang="en">' +
+    //   '<head>' +
+    //     '<meta charset="UTF-8">' +
+    //     '<title> The Elements -' + data.elementName + '</title>' +
+    //     '<link rel="stylesheet" href="/css/styles.css">' +
+    //   '</head>' +
+    //   '<body>' +
+    //     '<h1>' + data.elementName + '</h1>' +
+    //     '<h2>' + data.elementSymbol + '</h2>' +
+    //     '<h3>' + data.elementAtomicNumber + '</h3>' +
+    //     '<p>' + data.elementDescription + '</p>' +
+    //     '<p><a href="/">back</a></p>' +
+    //   '</body>' +
+    //   '</html>';
     // var addElement =
 
     //conditional to test if request is a POST
@@ -79,9 +83,9 @@ var server = http.createServer(function(request, response){
     //if elementName request is NOT a file ---> writeFile
     //save method to a variable and run it through writefile
       if(request.url === '/elements') {
-        fs.writeFile('./public/'+data.elementName+'.html', dataPost, function(err){
+        fs.writeFile('./public/'+data.elementName+'.html', dataBuild(data), function(err){
           if(err) throw err;
-          response.end(dataPost);
+          response.end(dataBuild(data));
           console.log('Data has been stored');
         });
         fs.writeFile('./public/index.html', addElement, {encoding: 'UTF-8'}, function(err){
