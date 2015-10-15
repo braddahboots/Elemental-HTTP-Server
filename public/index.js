@@ -1,3 +1,7 @@
+var head = require('./lib/headHTML');
+var body = require('./lib/body');
+var list = require('./lib/list');
+
 function indexBuild(data) {
   return  '<html lang="en">' +
       '<head>' +
