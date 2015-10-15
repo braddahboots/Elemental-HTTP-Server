@@ -14,9 +14,31 @@ var url = require('url');
 var PORT = 3000;
 
 //template html built for dynamically writing new data post
-var dataBuild = require('./template');
+var dataBuild = require('./templateElement');
 
-//===================================Server request=======================
+//template elementList builder for dynamically adding elements to index.html
+var writeIndex = require('./template/templateList');
+
+//on server load elements is null - will be set to an array
+var elements = null;
+
+//=============================Server request=======================
+
+//iterate over file directory and pull element names
+fs.readdir('./public', function(err, files) {
+
+  if(err) throw err;
+    elements = files.filter(function(file) {
+    console.log(file);
+    return (file.indexOf('.html') > 1 && file !== 'index.html' && file !== '404.html');
+  }).map(function(elementName) {
+    return (elementName.substr(0,elementName.indexOf('.html')));
+  }).map(function(lowerCase) {
+    return (lowerCase.substr(0,1).toUpperCase() + lowerCase.substr(1));
+  });
+  console.log(elements);
+  writeIndex(elements);
+});
 
 //creating server
 var server = http.createServer(function(request, response){
@@ -37,15 +59,18 @@ var server = http.createServer(function(request, response){
     } else {
       fs.readFile('./public/'+request.url, {encoding: 'UTF-8'},function(err, buffer){
         console.log('code is beautiful');
-        if(err) throw err;
-
-        //return err 404 index.html
-        fs.readFile('./public/404.html', {encoding: 'UTF-8'}, function(err, buffer) {
-          if(err) throw err;
-          response.writeHead(404, {'Content-Type': 'text/plain'});
-          response.end(buffer);
-        });
-
+        if(err) {
+          if(err.code === 'ENOENT') {
+          //return err 404 index.html
+          fs.readFile('./public/404.html', {encoding: 'UTF-8'}, function(err, buffer) {
+            if(err) throw err;
+            response.writeHead(404, {'Content-Type': 'text/plain'});
+            response.end(buffer);
+          });
+            } else {
+              throw err;
+            }
+          }
         response.end(buffer);
       });
     }
@@ -59,41 +84,29 @@ var server = http.createServer(function(request, response){
   //parse the data string to return an object
   request.on('end', function() {
     var data = qs.parse( dataBuffer.toString() );
-    // var dataPost =
-    //   '<html lang="en">' +
-    //   '<head>' +
-    //     '<meta charset="UTF-8">' +
-    //     '<title> The Elements -' + data.elementName + '</title>' +
-    //     '<link rel="stylesheet" href="/css/styles.css">' +
-    //   '</head>' +
-    //   '<body>' +
-    //     '<h1>' + data.elementName + '</h1>' +
-    //     '<h2>' + data.elementSymbol + '</h2>' +
-    //     '<h3>' + data.elementAtomicNumber + '</h3>' +
-    //     '<p>' + data.elementDescription + '</p>' +
-    //     '<p><a href="/">back</a></p>' +
-    //   '</body>' +
-    //   '</html>';
-    // var addElement =
 
     //conditional to test if request is a POST
     if(request.method === 'POST') {
-
     //post data dynamically based on elementName
     //if elementName request is NOT a file ---> writeFile
-    //save method to a variable and run it through writefile
+    //save method to a variable and run it through writeFile
       if(request.url === '/elements') {
         fs.writeFile('./public/'+data.elementName+'.html', dataBuild(data), function(err){
+
           if(err) throw err;
           response.end(dataBuild(data));
           console.log('Data has been stored');
-        });
-        fs.writeFile('./public/index.html', addElement, {encoding: 'UTF-8'}, function(err){
-          if(err) throw err;
-          console.log('Added ' + data.elementName + ' to index.html');
+
+          if(elements.indexOf(data.elementName) === -1) {
+            //update of element array with new element names
+            elements.push(data.elementName);
+            //update indexHTML
+            writeIndex(elements);
+          }
+          console.log('array', elements);
         });
       }
-    };
+    }
   });
 
 });
